@@ -22,6 +22,19 @@ jobs:
         with:
           gradle-version: "8.7"
 
+      # Clé de signature fixe, stockée dans le secret KEYSTORE_BASE64 (fichier
+      # debug.keystore encodé en base64) : chaque APK s'installe par-dessus le précédent.
+      - name: Restaurer la clé de signature
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > app/debug.keystore
+            echo "CLE_FIXE=oui" >> "$GITHUB_ENV"
+          else
+            echo "::warning::Secret KEYSTORE_BASE64 absent : APK signé avec une clé temporaire, release non publiée."
+          fi
+
       # Le numéro du run sert de numéro de version (voir app/build.gradle.kts).
       - name: Compiler l'APK
         run: gradle assembleRelease --no-daemon
@@ -40,7 +53,10 @@ jobs:
       # Release à tag fixe : l'application y cherche ses mises à jour (appui sur le logo),
       # et l'URL de téléchargement ne change jamais :
       # https://github.com/dabom1993-pixel/ADF-TAR-Application-Principale/releases/download/tablette-latest/ADF-TAR.apk
+      # Sans la clé fixe, l'APK ne pourrait pas s'installer par-dessus les tablettes
+      # déjà équipées : on ne le publie donc pas.
       - name: Publier la release "tablette-latest"
+        if: env.CLE_FIXE == 'oui'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: tablette-latest
