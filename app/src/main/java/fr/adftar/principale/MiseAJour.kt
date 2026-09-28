@@ -8,16 +8,16 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 /**
- * Mises à jour depuis la release GitHub à tag fixe "tablette-latest" du dépôt public
- * ADF-TAR-Versions, republiée à chaque compilation (voir .github/workflows/build-apk.yml).
- * Le code source reste privé ; seul l'APK est public, donc aucun compte n'est nécessaire.
+ * Mises à jour depuis la release GitHub à tag fixe "tablette-latest", republiée à chaque
+ * compilation (voir .github/workflows/build-apk.yml). Le dépôt est public : aucun compte
+ * n'est nécessaire.
  *
  * Ces fonctions font des accès réseau : à appeler hors du thread principal.
  */
 object MiseAJour {
 
     private const val BASE =
-        "https://github.com/dabom1993-pixel/ADF-TAR-Versions/releases/download/tablette-latest"
+        "https://github.com/dabom1993-pixel/ADF-TAR-Application-Principale/releases/download/tablette-latest"
     private const val URL_VERSION = "$BASE/version.txt"
     private const val URL_APK = "$BASE/ADF-TAR.apk"
 

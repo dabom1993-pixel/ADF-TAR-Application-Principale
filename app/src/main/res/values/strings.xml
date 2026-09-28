@@ -13,5 +13,6 @@
     <string name="maj_telechargement">Téléchargement de la version %1$d… %2$d %%</string>
     <string name="maj_aucune">Pas de mise à jour nécessaire, vous disposez de la dernière version.</string>
     <string name="maj_erreur">Impossible de vérifier la mise à jour. Vérifiez la connexion internet.</string>
+    <string name="maj_autorisation">Autorisez « Installer des applications inconnues » pour ADF TAR, puis revenez et touchez à nouveau le logo.</string>
     <string name="maj_installee">Application mise à jour (version %1$s).</string>
 </resources>

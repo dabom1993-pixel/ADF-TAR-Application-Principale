@@ -31,11 +31,11 @@ de sa page Play Store (`...details?id=com.android.chrome`).
 ## Obtenir l'APK
 
 À chaque push, GitHub Actions compile l'APK et le publie sur la release à tag fixe
-`tablette-latest` du dépôt public `ADF-TAR-Versions` (ce dépôt-ci reste privé).
+`tablette-latest` de ce dépôt (qui doit rester public).
 Le lien de téléchargement ne change jamais :
 
 ```
-https://github.com/dabom1993-pixel/ADF-TAR-Versions/releases/download/tablette-latest/ADF-TAR.apk
+https://github.com/dabom1993-pixel/ADF-TAR-Application-Principale/releases/download/tablette-latest/ADF-TAR.apk
 ```
 
 ## Mettre à jour la tablette
@@ -45,16 +45,16 @@ Toucher le **logo Groupe ADF** en haut à gauche : l'application compare sa vers
 et lance l'installation. Android demande une confirmation (et, la première fois,
 d'autoriser l'installation d'applications depuis ADF TAR).
 
-## Secrets GitHub nécessaires (Settings → Secrets and variables → Actions)
+## Secret GitHub nécessaire (Settings → Secrets and variables → Actions)
 
 - `KEYSTORE_BASE64` : la clé de signature fixe, encodée en base64. Chaque mise à jour
   s'installe ainsi par-dessus la précédente. Sans ce secret, l'APK est compilé
   mais pas publié.
-- `RELEASES_TOKEN` : jeton GitHub (fine-grained) avec la permission *Contents :
-  Read and write* sur le dépôt `ADF-TAR-Versions`.
 
 ## Installer sur la tablette
 
-1. Copier l'APK sur la tablette.
-2. L'ouvrir depuis *Mes fichiers* et autoriser l'installation d'applications
+1. Sur la tablette, ouvrir le lien de téléchargement ci-dessus dans le navigateur.
+2. Ouvrir le fichier téléchargé et autoriser l'installation d'applications
    de sources inconnues si Android le demande.
+3. Si une version signée avec une autre clé est déjà installée, la désinstaller
+   d'abord (sinon Android affiche « Application non installée »).

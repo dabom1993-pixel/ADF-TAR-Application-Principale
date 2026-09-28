@@ -50,19 +50,15 @@ jobs:
           name: ADF-TAR-apk
           path: publication/ADF-TAR.apk
 
-      # Release à tag fixe dans le dépôt PUBLIC ADF-TAR-Versions (ce dépôt-ci est privé) :
-      # l'application y cherche ses mises à jour (appui sur le logo), et l'URL de
-      # téléchargement ne change jamais :
-      # https://github.com/dabom1993-pixel/ADF-TAR-Versions/releases/download/tablette-latest/ADF-TAR.apk
-      # Le secret RELEASES_TOKEN est un jeton GitHub autorisé à écrire dans ADF-TAR-Versions.
+      # Release à tag fixe : l'application y cherche ses mises à jour (appui sur le logo),
+      # et l'URL de téléchargement ne change jamais :
+      # https://github.com/dabom1993-pixel/ADF-TAR-Application-Principale/releases/download/tablette-latest/ADF-TAR.apk
       # Sans la clé fixe, l'APK ne pourrait pas s'installer par-dessus les tablettes
       # déjà équipées : on ne le publie donc pas.
       - name: Publier la release "tablette-latest"
         if: env.CLE_FIXE == 'oui'
         uses: softprops/action-gh-release@v2
         with:
-          repository: dabom1993-pixel/ADF-TAR-Versions
-          token: ${{ secrets.RELEASES_TOKEN }}
           tag_name: tablette-latest
           name: "Dernière version (tablette)"
           body: "APK republié automatiquement à chaque compilation."

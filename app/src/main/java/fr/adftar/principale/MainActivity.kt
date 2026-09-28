@@ -10,6 +10,7 @@ import android.graphics.ColorMatrixColorFilter
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
@@ -63,6 +64,17 @@ class MainActivity : Activity() {
     }
 
     private fun verifierMiseAJour() {
+        // Sans cette autorisation, Samsung bloque l'installation de la mise à jour.
+        if (!packageManager.canRequestPackageInstalls()) {
+            Toast.makeText(this, R.string.maj_autorisation, Toast.LENGTH_LONG).show()
+            startActivity(
+                Intent(
+                    Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                    Uri.parse("package:$packageName")
+                )
+            )
+            return
+        }
         val vue = layoutInflater.inflate(R.layout.dialog_mise_a_jour, null)
         val texte = vue.findViewById<TextView>(R.id.texte_maj)
         val barre = vue.findViewById<ProgressBar>(R.id.progression_maj)
