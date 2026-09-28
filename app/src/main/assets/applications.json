@@ -1,0 +1,6 @@
+[
+  { "nom": "Paramètres", "package": "com.android.settings" },
+  { "nom": "Chrome", "package": "com.android.chrome" },
+  { "nom": "Mes fichiers", "package": "com.sec.android.app.myfiles" },
+  { "nom": "Appareil photo", "package": "com.sec.android.app.camera" }
+]

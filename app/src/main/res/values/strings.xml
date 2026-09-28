@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ADF TAR</string>
+    <string name="titre">ADF TAR</string>
+    <string name="sous_titre">Touchez une application pour l\'ouvrir</string>
+    <string name="aucune_app">Aucune application configurée</string>
+    <string name="app_non_installee">%1$s n\'est pas installée sur cette tablette</string>
+</resources>
