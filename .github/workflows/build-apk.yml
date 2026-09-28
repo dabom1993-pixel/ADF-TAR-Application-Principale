@@ -4,6 +4,9 @@ on:
   push:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -19,10 +22,30 @@ jobs:
         with:
           gradle-version: "8.7"
 
+      # Le numéro du run sert de numéro de version (voir app/build.gradle.kts).
       - name: Compiler l'APK
         run: gradle assembleRelease --no-daemon
+
+      - name: Préparer les fichiers de la release
+        run: |
+          mkdir -p publication
+          cp app/build/outputs/apk/release/app-release.apk publication/ADF-TAR.apk
+          echo "${{ github.run_number }}" > publication/version.txt
 
       - uses: actions/upload-artifact@v4
         with:
           name: ADF-TAR-apk
-          path: app/build/outputs/apk/release/*.apk
+          path: publication/ADF-TAR.apk
+
+      # Release à tag fixe : l'application y cherche ses mises à jour (appui sur le logo),
+      # et l'URL de téléchargement ne change jamais :
+      # https://github.com/dabom1993-pixel/ADF-TAR-Application-Principale/releases/download/tablette-latest/ADF-TAR.apk
+      - name: Publier la release "tablette-latest"
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: tablette-latest
+          name: "Dernière version (tablette)"
+          body: "APK republié automatiquement à chaque compilation."
+          files: |
+            publication/ADF-TAR.apk
+            publication/version.txt

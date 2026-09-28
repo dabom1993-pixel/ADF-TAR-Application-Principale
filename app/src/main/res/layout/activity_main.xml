@@ -6,22 +6,56 @@
     android:orientation="vertical"
     android:padding="32dp">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/titre"
-        android:textColor="@color/texte"
-        android:textSize="34sp"
-        android:textStyle="bold" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
         android:layout_marginBottom="24dp"
-        android:text="@string/sous_titre"
-        android:textColor="@color/texte_secondaire"
-        android:textSize="18sp" />
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <!-- Appui sur le logo : recherche et installation d'une mise à jour. -->
+        <ImageView
+            android:id="@+id/logo"
+            android:layout_width="wrap_content"
+            android:layout_height="88dp"
+            android:adjustViewBounds="true"
+            android:background="@drawable/fond_logo"
+            android:contentDescription="@string/logo_description"
+            android:padding="8dp"
+            android:src="@drawable/logo_adf" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/titre"
+                android:textColor="@color/texte"
+                android:textSize="34sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/sous_titre"
+                android:textColor="@color/texte_secondaire"
+                android:textSize="18sp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/texte_version"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top"
+            android:textColor="@color/texte_secondaire"
+            android:textSize="14sp" />
+    </LinearLayout>
 
     <FrameLayout
         android:layout_width="match_parent"

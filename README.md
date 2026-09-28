@@ -30,9 +30,22 @@ de sa page Play Store (`...details?id=com.android.chrome`).
 
 ## Obtenir l'APK
 
-À chaque push, GitHub Actions compile l'APK (onglet **Actions** → dernier run →
-artefact **ADF-TAR-apk**). On peut aussi le compiler avec Android Studio
-(ouvrir le dossier, puis *Build → Build APK*).
+À chaque push, GitHub Actions compile l'APK et le publie sur la release à tag fixe
+`tablette-latest`. Le lien de téléchargement ne change jamais :
+
+```
+https://github.com/dabom1993-pixel/ADF-TAR-Application-Principale/releases/download/tablette-latest/ADF-TAR.apk
+```
+
+## Mettre à jour la tablette
+
+Toucher le **logo Groupe ADF** en haut à gauche : l'application compare sa version
+(affichée en haut à droite) à la dernière publiée, télécharge la nouvelle si besoin
+et lance l'installation. Android demande une confirmation (et, la première fois,
+d'autoriser l'installation d'applications depuis ADF TAR).
+
+L'APK est signé avec une clé fixe (`app/debug.keystore`) : chaque mise à jour
+s'installe par-dessus la précédente.
 
 ## Installer sur la tablette
 

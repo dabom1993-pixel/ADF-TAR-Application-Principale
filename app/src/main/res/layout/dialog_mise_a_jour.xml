@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:id="@+id/texte_maj"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/maj_recherche"
+        android:textColor="@color/texte"
+        android:textSize="16sp" />
+
+    <ProgressBar
+        android:id="@+id/progression_maj"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:indeterminate="true"
+        android:max="100" />
+</LinearLayout>

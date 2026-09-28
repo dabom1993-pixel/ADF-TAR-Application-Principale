@@ -1,6 +1,7 @@
 package fr.adftar.principale
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -14,6 +15,7 @@ import android.view.ViewGroup
 import android.widget.BaseAdapter
 import android.widget.GridView
 import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import org.json.JSONArray
@@ -41,6 +43,70 @@ class MainActivity : Activity() {
         grille.setOnItemClickListener { _, _, position, _ ->
             ouvrir(adapter.getItem(position))
         }
+
+        findViewById<TextView>(R.id.texte_version).text =
+            getString(R.string.version, BuildConfig.VERSION_NAME)
+        findViewById<View>(R.id.logo).setOnClickListener { verifierMiseAJour() }
+        signalerSiMiseAJourInstallee()
+    }
+
+    /** Affiche un message au premier lancement qui suit une mise à jour. */
+    private fun signalerSiMiseAJourInstallee() {
+        val prefs = getSharedPreferences("maj", MODE_PRIVATE)
+        val precedente = prefs.getInt("version_lancee", 0)
+        if (precedente != 0 && BuildConfig.VERSION_CODE > precedente) {
+            Toast.makeText(
+                this, getString(R.string.maj_installee, BuildConfig.VERSION_NAME), Toast.LENGTH_LONG
+            ).show()
+        }
+        prefs.edit().putInt("version_lancee", BuildConfig.VERSION_CODE).apply()
+    }
+
+    private fun verifierMiseAJour() {
+        val vue = layoutInflater.inflate(R.layout.dialog_mise_a_jour, null)
+        val texte = vue.findViewById<TextView>(R.id.texte_maj)
+        val barre = vue.findViewById<ProgressBar>(R.id.progression_maj)
+        val dialogue = AlertDialog.Builder(this)
+            .setTitle(R.string.maj_titre)
+            .setView(vue)
+            .setCancelable(false)
+            .show()
+
+        Thread {
+            try {
+                val publiee = MiseAJour.versionPubliee()
+                if (publiee == null || publiee <= BuildConfig.VERSION_CODE) {
+                    runOnUiThread {
+                        dialogue.dismiss()
+                        Toast.makeText(
+                            this,
+                            if (publiee == null) R.string.maj_erreur else R.string.maj_aucune,
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                    return@Thread
+                }
+                runOnUiThread {
+                    barre.isIndeterminate = false
+                    texte.text = getString(R.string.maj_telechargement, publiee, 0)
+                }
+                val apk = MiseAJour.telecharger(this) { pourcent ->
+                    runOnUiThread {
+                        barre.progress = pourcent
+                        texte.text = getString(R.string.maj_telechargement, publiee, pourcent)
+                    }
+                }
+                runOnUiThread {
+                    dialogue.dismiss()
+                    startActivity(MiseAJour.intentInstallation(this, apk))
+                }
+            } catch (e: Exception) {
+                runOnUiThread {
+                    dialogue.dismiss()
+                    Toast.makeText(this, R.string.maj_erreur, Toast.LENGTH_LONG).show()
+                }
+            }
+        }.start()
     }
 
     override fun onResume() {
