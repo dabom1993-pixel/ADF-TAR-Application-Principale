@@ -4,8 +4,9 @@ Application Android pour tablette Samsung. Au lancement, elle affiche une fenêt
 avec une grille de tuiles : chaque tuile ouvre une application de la tablette.
 
 - Application installée : la tuile affiche son icône, un appui l'ouvre.
-- Application absente : la tuile est grisée, un appui ouvre son lien de
-  téléchargement (champ `telechargement`) ou, à défaut, sa page sur le Play Store.
+- Application absente : la tuile est grisée, un appui télécharge l'APK dans
+  l'application et lance directement son installation (champ `telechargement`),
+  sans ouvrir le navigateur ; à défaut de lien, il ouvre sa page sur le Play Store.
 
 ## Ajouter une application
 

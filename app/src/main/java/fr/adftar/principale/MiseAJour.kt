@@ -19,7 +19,7 @@ object MiseAJour {
     private const val BASE =
         "https://github.com/dabom1993-pixel/ADF-TAR-Application-Principale/releases/download/tablette-latest"
     private const val URL_VERSION = "$BASE/version.txt"
-    private const val URL_APK = "$BASE/ADF-TAR.apk"
+    const val URL_APK = "$BASE/ADF-TAR.apk"
 
     /** Numéro de la dernière version publiée, ou null si la release est introuvable. */
     fun versionPubliee(): Int? {
@@ -32,11 +32,11 @@ object MiseAJour {
         }
     }
 
-    /** Télécharge l'APK dans le stockage privé de l'application, progression de 0 à 100. */
-    fun telecharger(context: Context, progression: (Int) -> Unit): File {
+    /** Télécharge un APK dans le stockage privé de l'application, progression de 0 à 100. */
+    fun telecharger(context: Context, url: String, nomFichier: String, progression: (Int) -> Unit): File {
         val dossier = File(context.filesDir, "maj").apply { mkdirs() }
-        val apk = File(dossier, "ADF-TAR.apk")
-        val conn = ouvrir(URL_APK)
+        val apk = File(dossier, nomFichier)
+        val conn = ouvrir(url)
         try {
             if (conn.responseCode != HttpURLConnection.HTTP_OK) {
                 throw IllegalStateException("HTTP ${conn.responseCode}")

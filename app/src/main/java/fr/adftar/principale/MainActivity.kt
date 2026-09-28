@@ -63,62 +63,86 @@ class MainActivity : Activity() {
         prefs.edit().putInt("version_lancee", BuildConfig.VERSION_CODE).apply()
     }
 
-    private fun verifierMiseAJour() {
-        // Sans cette autorisation, Samsung bloque l'installation de la mise à jour.
-        if (!packageManager.canRequestPackageInstalls()) {
-            Toast.makeText(this, R.string.maj_autorisation, Toast.LENGTH_LONG).show()
-            startActivity(
-                Intent(
-                    Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
-                    Uri.parse("package:$packageName")
-                )
-            )
-            return
-        }
-        val vue = layoutInflater.inflate(R.layout.dialog_mise_a_jour, null)
-        val texte = vue.findViewById<TextView>(R.id.texte_maj)
-        val barre = vue.findViewById<ProgressBar>(R.id.progression_maj)
-        val dialogue = AlertDialog.Builder(this)
-            .setTitle(R.string.maj_titre)
-            .setView(vue)
-            .setCancelable(false)
-            .show()
+    /** Sans cette autorisation, Samsung bloque l'installation : on ouvre le réglage. */
+    private fun peutInstaller(): Boolean {
+        if (packageManager.canRequestPackageInstalls()) return true
+        Toast.makeText(this, R.string.maj_autorisation, Toast.LENGTH_LONG).show()
+        startActivity(
+            Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:$packageName"))
+        )
+        return false
+    }
 
+    /** Appui sur le logo : met à jour ADF TAR si une version plus récente est publiée. */
+    private fun verifierMiseAJour() {
+        if (!peutInstaller()) return
+        val dialogue = DialogueTelechargement(getString(R.string.maj_titre), getString(R.string.maj_recherche))
         Thread {
             try {
                 val publiee = MiseAJour.versionPubliee()
                 if (publiee == null || publiee <= BuildConfig.VERSION_CODE) {
-                    runOnUiThread {
-                        dialogue.dismiss()
-                        Toast.makeText(
-                            this,
-                            if (publiee == null) R.string.maj_erreur else R.string.maj_aucune,
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
+                    dialogue.fermer(if (publiee == null) R.string.maj_erreur else R.string.maj_aucune)
                     return@Thread
                 }
-                runOnUiThread {
-                    barre.isIndeterminate = false
-                    texte.text = getString(R.string.maj_telechargement, publiee, 0)
+                val apk = MiseAJour.telecharger(this, MiseAJour.URL_APK, "ADF-TAR.apk") {
+                    dialogue.progression(getString(R.string.maj_telechargement, publiee, it), it)
                 }
-                val apk = MiseAJour.telecharger(this) { pourcent ->
-                    runOnUiThread {
-                        barre.progress = pourcent
-                        texte.text = getString(R.string.maj_telechargement, publiee, pourcent)
-                    }
-                }
-                runOnUiThread {
-                    dialogue.dismiss()
-                    startActivity(MiseAJour.intentInstallation(this, apk))
-                }
+                dialogue.installer(apk)
             } catch (e: Exception) {
-                runOnUiThread {
-                    dialogue.dismiss()
-                    Toast.makeText(this, R.string.maj_erreur, Toast.LENGTH_LONG).show()
-                }
+                dialogue.fermer(R.string.maj_erreur)
             }
         }.start()
+    }
+
+    /** Tuile d'une application absente : téléchargement dans l'application puis installation. */
+    private fun installer(app: AppCible, url: String) {
+        if (!peutInstaller()) return
+        val dialogue = DialogueTelechargement(
+            getString(R.string.installation_titre, app.nom),
+            getString(R.string.installation_progression, app.nom, 0)
+        )
+        Thread {
+            try {
+                val apk = MiseAJour.telecharger(this, url, "${app.packageName}.apk") {
+                    dialogue.progression(getString(R.string.installation_progression, app.nom, it), it)
+                }
+                dialogue.installer(apk)
+            } catch (e: Exception) {
+                dialogue.fermer(R.string.installation_erreur)
+            }
+        }.start()
+    }
+
+    /** Fenêtre avec barre de progression, pilotable depuis un thread de téléchargement. */
+    private inner class DialogueTelechargement(titre: String, messageInitial: String) {
+        private val vue = layoutInflater.inflate(R.layout.dialog_mise_a_jour, null)
+        private val texte = vue.findViewById<TextView>(R.id.texte_maj)
+        private val barre = vue.findViewById<ProgressBar>(R.id.progression_maj)
+        private val dialogue = AlertDialog.Builder(this@MainActivity)
+            .setTitle(titre)
+            .setView(vue)
+            .setCancelable(false)
+            .show()
+
+        init {
+            texte.text = messageInitial
+        }
+
+        fun progression(message: String, pourcent: Int) = runOnUiThread {
+            barre.isIndeterminate = false
+            barre.progress = pourcent
+            texte.text = message
+        }
+
+        fun fermer(message: Int) = runOnUiThread {
+            dialogue.dismiss()
+            Toast.makeText(this@MainActivity, message, Toast.LENGTH_LONG).show()
+        }
+
+        fun installer(apk: java.io.File) = runOnUiThread {
+            dialogue.dismiss()
+            startActivity(MiseAJour.intentInstallation(this@MainActivity, apk))
+        }
     }
 
     override fun onResume() {
@@ -151,12 +175,12 @@ class MainActivity : Activity() {
             startActivity(intent)
             return
         }
-        // Application absente : proposer de l'installer (lien direct, sinon Play Store).
-        Toast.makeText(this, getString(R.string.app_non_installee, app.nom), Toast.LENGTH_SHORT).show()
+        // Application absente : l'installer directement (APK), sinon via le Play Store.
         if (app.telechargement != null) {
-            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(app.telechargement)))
+            installer(app, app.telechargement)
             return
         }
+        Toast.makeText(this, getString(R.string.app_non_installee, app.nom), Toast.LENGTH_SHORT).show()
         try {
             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=${app.packageName}")))
         } catch (e: ActivityNotFoundException) {
