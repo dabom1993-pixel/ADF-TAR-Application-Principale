@@ -31,6 +31,10 @@ android {
                 keyAlias = "androiddebugkey"
                 keyPassword = "android"
             }
+            // Signature v1 en plus de la v2 : certaines tablettes Samsung sous Android 8
+            // refusent un APK signé seulement en v2 (« Application non installée »).
+            enableV1Signing = true
+            enableV2Signing = true
         }
     }
 
