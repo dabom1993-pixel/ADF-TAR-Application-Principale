@@ -1,6 +1,7 @@
 [
-  { "nom": "Paramètres", "package": "com.android.settings" },
-  { "nom": "Chrome", "package": "com.android.chrome" },
-  { "nom": "Mes fichiers", "package": "com.sec.android.app.myfiles" },
-  { "nom": "Appareil photo", "package": "com.sec.android.app.camera" }
+  {
+    "nom": "PV Jointage",
+    "package": "com.adf.pvjointage",
+    "telechargement": "https://github.com/dabom1993-pixel/PVJointage/releases/download/tablette-latest/PVJointage.apk"
+  }
 ]

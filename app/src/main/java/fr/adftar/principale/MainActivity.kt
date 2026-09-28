@@ -19,7 +19,12 @@ import android.widget.Toast
 import org.json.JSONArray
 
 /** Une application affichée dans la fenêtre principale. */
-data class AppCible(val nom: String, val packageName: String)
+data class AppCible(
+    val nom: String,
+    val packageName: String,
+    /** Lien de téléchargement de l'APK quand l'application n'est pas sur le Play Store. */
+    val telechargement: String?
+)
 
 class MainActivity : Activity() {
 
@@ -50,7 +55,11 @@ class MainActivity : Activity() {
         val tableau = JSONArray(json)
         return (0 until tableau.length()).map { i ->
             val obj = tableau.getJSONObject(i)
-            AppCible(obj.getString("nom"), obj.getString("package"))
+            AppCible(
+                obj.getString("nom"),
+                obj.getString("package"),
+                obj.optString("telechargement").ifBlank { null }
+            )
         }
     }
 
@@ -64,8 +73,12 @@ class MainActivity : Activity() {
             startActivity(intent)
             return
         }
-        // Application absente : proposer de l'installer depuis le store.
+        // Application absente : proposer de l'installer (lien direct, sinon Play Store).
         Toast.makeText(this, getString(R.string.app_non_installee, app.nom), Toast.LENGTH_SHORT).show()
+        if (app.telechargement != null) {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(app.telechargement)))
+            return
+        }
         try {
             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=${app.packageName}")))
         } catch (e: ActivityNotFoundException) {
