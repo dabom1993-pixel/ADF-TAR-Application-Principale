@@ -3,5 +3,10 @@
     "nom": "PV Jointage",
     "package": "com.adf.pvjointage",
     "telechargement": "https://github.com/dabom1993-pixel/PVJointage/releases/download/tablette-latest/PVJointage.apk"
+  },
+  {
+    "nom": "PI Robinetterie",
+    "package": "com.adf.pirobinetterie",
+    "telechargement": "https://github.com/dabom1993-pixel/Pr-paration-Int-gr-e/releases/download/tablette-latest/PIRobinetterie.apk"
   }
 ]
