@@ -23,6 +23,9 @@ Modifier `app/src/main/assets/applications.json` :
 ]
 ```
 
+`package` est l'identifiant Android de l'application. On le trouve dans l'adresse
+de sa page Play Store (`...details?id=com.android.chrome`).
+
 `telechargement` est facultatif : à utiliser pour les applications qui ne sont
 pas sur le Play Store.
 
@@ -43,9 +46,6 @@ Un appui de 5 secondes sur « Version … » (en haut à droite) demande le mot 
 des versions bêta. S'il est correct, une section « Versions bêta (test) » s'affiche
 sous les applications. Un nouvel appui de 5 secondes permet de la masquer.
 Seule l'empreinte SHA-256 du mot de passe est dans le code.
-
-`package` est l'identifiant Android de l'application. On le trouve dans l'adresse
-de sa page Play Store (`...details?id=com.android.chrome`).
 
 ## Obtenir l'APK
 
