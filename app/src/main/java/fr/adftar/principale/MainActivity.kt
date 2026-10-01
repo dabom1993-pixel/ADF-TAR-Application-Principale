@@ -11,33 +11,42 @@ import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
+import android.text.InputType
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
+import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.GridView
 import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import org.json.JSONArray
+import java.security.MessageDigest
 
 /** Une application affichée dans la fenêtre principale. */
 data class AppCible(
     val nom: String,
     val packageName: String,
     /** Lien de téléchargement de l'APK quand l'application n'est pas sur le Play Store. */
-    val telechargement: String?
+    val telechargement: String?,
+    /** Version bêta, installée à côté de la finale (autre identifiant de paquet). */
+    val beta: AppCible? = null
 )
 
 class MainActivity : Activity() {
 
     private lateinit var adapter: AppsAdapter
+    private lateinit var adapterBeta: AppsAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        adapter = AppsAdapter(chargerApplications())
+        val apps = chargerApplications()
+        adapter = AppsAdapter(apps)
         val grille = findViewById<GridView>(R.id.grille_apps)
         grille.adapter = adapter
         grille.emptyView = findViewById(R.id.texte_vide)
@@ -45,11 +54,76 @@ class MainActivity : Activity() {
             ouvrir(adapter.getItem(position))
         }
 
-        findViewById<TextView>(R.id.texte_version).text =
-            getString(R.string.version, BuildConfig.VERSION_NAME)
+        adapterBeta = AppsAdapter(apps.mapNotNull { it.beta })
+        val grilleBeta = findViewById<GridView>(R.id.grille_beta)
+        grilleBeta.adapter = adapterBeta
+        grilleBeta.setOnItemClickListener { _, _, position, _ ->
+            ouvrir(adapterBeta.getItem(position))
+        }
+        afficherBeta(prefsBeta().getBoolean(CLE_BETA, false))
+
+        val version = findViewById<TextView>(R.id.texte_version)
+        version.text = getString(R.string.version, BuildConfig.VERSION_NAME)
+        surAppuiLong(version, DUREE_APPUI_BETA_MS) { basculerBeta() }
         findViewById<View>(R.id.logo).setOnClickListener { verifierMiseAJour() }
         signalerSiMiseAJourInstallee()
     }
+
+    /** Déclenche [action] quand [vue] reste appuyée pendant [dureeMs]. */
+    private fun surAppuiLong(vue: View, dureeMs: Long, action: () -> Unit) {
+        val declencheur = Runnable { action() }
+        vue.setOnTouchListener { v, evenement ->
+            when (evenement.actionMasked) {
+                MotionEvent.ACTION_DOWN -> v.postDelayed(declencheur, dureeMs)
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> v.removeCallbacks(declencheur)
+            }
+            true
+        }
+    }
+
+    private fun prefsBeta() = getSharedPreferences("beta", MODE_PRIVATE)
+
+    private fun afficherBeta(visible: Boolean) {
+        prefsBeta().edit().putBoolean(CLE_BETA, visible).apply()
+        findViewById<View>(R.id.section_beta).visibility = if (visible) View.VISIBLE else View.GONE
+    }
+
+    /** Appui long sur la version : mot de passe pour afficher les bêtas, ou les masquer. */
+    private fun basculerBeta() {
+        if (prefsBeta().getBoolean(CLE_BETA, false)) {
+            AlertDialog.Builder(this)
+                .setMessage(R.string.beta_masquer)
+                .setPositiveButton(R.string.masquer) { _, _ -> afficherBeta(false) }
+                .setNegativeButton(R.string.annuler, null)
+                .show()
+            return
+        }
+        val saisie = EditText(this).apply {
+            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
+        }
+        val cadre = FrameLayout(this).apply {
+            val marge = (24 * resources.displayMetrics.density).toInt()
+            setPadding(marge, marge / 2, marge, 0)
+            addView(saisie)
+        }
+        AlertDialog.Builder(this)
+            .setTitle(R.string.beta_mot_de_passe)
+            .setView(cadre)
+            .setPositiveButton(R.string.valider) { _, _ ->
+                if (empreinte(saisie.text.toString()) == EMPREINTE_MOT_DE_PASSE_BETA) {
+                    afficherBeta(true)
+                    Toast.makeText(this, R.string.beta_activees, Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this, R.string.beta_mauvais_mot_de_passe, Toast.LENGTH_LONG).show()
+                }
+            }
+            .setNegativeButton(R.string.annuler, null)
+            .show()
+    }
+
+    private fun empreinte(texte: String): String =
+        MessageDigest.getInstance("SHA-256").digest(texte.toByteArray())
+            .joinToString("") { "%02x".format(it) }
 
     /** Affiche un message au premier lancement qui suit une mise à jour. */
     private fun signalerSiMiseAJourInstallee() {
@@ -149,6 +223,7 @@ class MainActivity : Activity() {
         super.onResume()
         // Rafraîchit l'état "installée / non installée" au retour dans l'application.
         adapter.notifyDataSetChanged()
+        adapterBeta.notifyDataSetChanged()
     }
 
     /** Lit la liste des applications depuis assets/applications.json. */
@@ -157,10 +232,19 @@ class MainActivity : Activity() {
         val tableau = JSONArray(json)
         return (0 until tableau.length()).map { i ->
             val obj = tableau.getJSONObject(i)
+            val nom = obj.getString("nom")
+            val beta = obj.optJSONObject("beta")?.let {
+                AppCible(
+                    getString(R.string.beta_nom, nom),
+                    it.getString("package"),
+                    it.optString("telechargement").ifBlank { null }
+                )
+            }
             AppCible(
-                obj.getString("nom"),
+                nom,
                 obj.getString("package"),
-                obj.optString("telechargement").ifBlank { null }
+                obj.optString("telechargement").ifBlank { null },
+                beta
             )
         }
     }
@@ -219,5 +303,14 @@ class MainActivity : Activity() {
             vue.alpha = if (installee) 1f else 0.5f
             return vue
         }
+    }
+
+    private companion object {
+        const val CLE_BETA = "beta_visible"
+        const val DUREE_APPUI_BETA_MS = 5_000L
+
+        /** Empreinte SHA-256 du mot de passe : le mot de passe lui-même n'est pas dans le code. */
+        const val EMPREINTE_MOT_DE_PASSE_BETA =
+            "62800fcd73f34e5e45b78eab27aed58084e1a363dfd802616dfbc40668c195b7"
     }
 }

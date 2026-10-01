@@ -53,6 +53,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="top"
+            android:padding="12dp"
             android:textColor="@color/texte_secondaire"
             android:textSize="14sp" />
     </LinearLayout>
@@ -81,4 +82,34 @@
             android:textColor="@color/texte_secondaire"
             android:textSize="18sp" />
     </FrameLayout>
+
+    <!-- Versions bêta : affichées après saisie du mot de passe (appui long sur la version). -->
+    <LinearLayout
+        android:id="@+id/section_beta"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp"
+            android:text="@string/beta_titre"
+            android:textColor="@color/beta"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <GridView
+            android:id="@+id/grille_beta"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:columnWidth="180dp"
+            android:horizontalSpacing="24dp"
+            android:numColumns="auto_fit"
+            android:stretchMode="columnWidth"
+            android:verticalSpacing="24dp" />
+    </LinearLayout>
 </LinearLayout>

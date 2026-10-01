@@ -7,6 +7,10 @@
   {
     "nom": "PI Robinetterie",
     "package": "com.adf.pirobinetterie",
-    "telechargement": "https://github.com/dabom1993-pixel/Pr-paration-Int-gr-e/releases/download/tablette-latest/PIRobinetterie.apk"
+    "telechargement": "https://github.com/dabom1993-pixel/Pr-paration-Int-gr-e/releases/download/tablette-latest/PIRobinetterie.apk",
+    "beta": {
+      "package": "com.adf.pirobinetterie.beta",
+      "telechargement": "https://github.com/dabom1993-pixel/Pr-paration-Int-gr-e/releases/download/tablette-beta/PIRobinetterie-BETA.apk"
+    }
   }
 ]

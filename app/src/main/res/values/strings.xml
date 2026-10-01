@@ -18,4 +18,14 @@
     <string name="installation_progression">Téléchargement de %1$s… %2$d %%</string>
     <string name="installation_erreur">Impossible de télécharger l\'application. Vérifiez la connexion internet.</string>
     <string name="maj_installee">Application mise à jour (version %1$s).</string>
+
+    <string name="beta_titre">Versions bêta (test)</string>
+    <string name="beta_nom">%1$s BÊTA</string>
+    <string name="beta_mot_de_passe">Mot de passe des versions bêta</string>
+    <string name="beta_mauvais_mot_de_passe">Mot de passe incorrect</string>
+    <string name="beta_activees">Versions bêta affichées</string>
+    <string name="beta_masquer">Masquer les versions bêta ?</string>
+    <string name="valider">Valider</string>
+    <string name="annuler">Annuler</string>
+    <string name="masquer">Masquer</string>
 </resources>

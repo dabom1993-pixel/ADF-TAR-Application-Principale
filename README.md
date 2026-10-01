@@ -26,6 +26,24 @@ Modifier `app/src/main/assets/applications.json` :
 `telechargement` est facultatif : à utiliser pour les applications qui ne sont
 pas sur le Play Store.
 
+`beta` est facultatif : version de test de l'application, avec son propre identifiant
+(`package`, par ex. `com.adf.pirobinetterie.beta`) pour s'installer à côté de la
+version finale :
+
+```json
+"beta": {
+  "package": "com.adf.pirobinetterie.beta",
+  "telechargement": "https://github.com/.../releases/download/tablette-beta/PIRobinetterie-BETA.apk"
+}
+```
+
+## Versions bêta
+
+Un appui de 5 secondes sur « Version … » (en haut à droite) demande le mot de passe
+des versions bêta. S'il est correct, une section « Versions bêta (test) » s'affiche
+sous les applications. Un nouvel appui de 5 secondes permet de la masquer.
+Seule l'empreinte SHA-256 du mot de passe est dans le code.
+
 `package` est l'identifiant Android de l'application. On le trouve dans l'adresse
 de sa page Play Store (`...details?id=com.android.chrome`).
 
