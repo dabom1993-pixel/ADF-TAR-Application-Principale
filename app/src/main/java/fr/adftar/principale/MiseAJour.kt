@@ -32,6 +32,20 @@ object MiseAJour {
         }
     }
 
+    /**
+     * Date de publication (ms) d'un APK, lue dans l'en-tête Last-Modified du fichier,
+     * sans le télécharger. Null si le lien ne répond pas.
+     */
+    fun datePublication(url: String): Long? {
+        val conn = ouvrir(url).apply { requestMethod = "HEAD" }
+        try {
+            if (conn.responseCode != HttpURLConnection.HTTP_OK) return null
+            return conn.lastModified.takeIf { it > 0 }
+        } finally {
+            conn.disconnect()
+        }
+    }
+
     /** Télécharge un APK dans le stockage privé de l'application, progression de 0 à 100. */
     fun telecharger(context: Context, url: String, nomFichier: String, progression: (Int) -> Unit): File {
         val dossier = File(context.filesDir, "maj").apply { mkdirs() }
@@ -61,12 +75,17 @@ object MiseAJour {
         return apk
     }
 
-    /** Intent de l'installeur Android (la confirmation système reste obligatoire). */
+    /**
+     * Intent de l'installeur Android (la confirmation système reste obligatoire). Il renvoie
+     * un résultat, ce qui permet d'enchaîner plusieurs installations l'une après l'autre.
+     */
+    @Suppress("DEPRECATION")
     fun intentInstallation(context: Context, apk: File): Intent {
         val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", apk)
-        return Intent(Intent.ACTION_VIEW).apply {
+        return Intent(Intent.ACTION_INSTALL_PACKAGE).apply {
             setDataAndType(uri, "application/vnd.android.package-archive")
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            putExtra(Intent.EXTRA_RETURN_RESULT, true)
         }
     }
 

@@ -28,4 +28,9 @@
     <string name="valider">Valider</string>
     <string name="annuler">Annuler</string>
     <string name="masquer">Masquer</string>
+
+    <string name="maj_choix_titre">Mises à jour</string>
+    <string name="maj_statut_disponible">Nouvelle version disponible</string>
+    <string name="maj_statut_a_jour">À jour</string>
+    <string name="maj_valider">Mettre à jour</string>
 </resources>

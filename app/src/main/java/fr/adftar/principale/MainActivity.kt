@@ -15,11 +15,13 @@ import android.text.InputType
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ProgressBar
+import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import org.json.JSONArray
@@ -135,25 +137,139 @@ class MainActivity : Activity() {
         return false
     }
 
-    /** Appui sur le logo : met à jour ADF TAR si une version plus récente est publiée. */
+    /** Une application qui peut être mise à jour (ADF TAR elle-même si [estAdfTar]). */
+    private class Candidat(
+        val nom: String,
+        val icone: Drawable?,
+        val url: String,
+        val fichier: String,
+        val disponible: Boolean,
+        val estAdfTar: Boolean = false
+    )
+
+    /** Mises à jour choisies, installées l'une après l'autre (ADF TAR en dernier). */
+    private val fileMisesAJour = ArrayDeque<Candidat>()
+
+    /**
+     * Appui sur le logo : vérifie ADF TAR et chaque application installée (finales et
+     * bêtas), puis propose la liste des mises à jour à cocher.
+     */
     private fun verifierMiseAJour() {
         if (!peutInstaller()) return
         val dialogue = DialogueTelechargement(getString(R.string.maj_titre), getString(R.string.maj_recherche))
         Thread {
-            try {
-                val publiee = MiseAJour.versionPubliee()
-                if (publiee == null || publiee <= BuildConfig.VERSION_CODE) {
-                    dialogue.fermer(if (publiee == null) R.string.maj_erreur else R.string.maj_aucune)
-                    return@Thread
-                }
-                val apk = MiseAJour.telecharger(this, MiseAJour.URL_APK, "ADF-TAR.apk") {
-                    dialogue.progression(getString(R.string.maj_telechargement, publiee, it), it)
-                }
-                dialogue.installer(apk)
+            val candidats = try {
+                rechercherMisesAJour()
             } catch (e: Exception) {
-                dialogue.fermer(R.string.maj_erreur)
+                null
+            }
+            when {
+                candidats == null -> dialogue.fermer(R.string.maj_erreur)
+                candidats.none { it.disponible } -> dialogue.fermer(R.string.maj_aucune)
+                else -> {
+                    dialogue.fermer()
+                    runOnUiThread { choisirMisesAJour(candidats) }
+                }
             }
         }.start()
+    }
+
+    /** Accès réseau : à appeler hors du thread principal. */
+    private fun rechercherMisesAJour(): List<Candidat> {
+        val publiee = MiseAJour.versionPubliee() ?: throw IllegalStateException("version.txt")
+        val candidats = mutableListOf(
+            Candidat(
+                getString(R.string.app_name),
+                getDrawable(R.mipmap.ic_launcher),
+                MiseAJour.URL_APK,
+                "ADF-TAR.apk",
+                publiee > BuildConfig.VERSION_CODE,
+                estAdfTar = true
+            )
+        )
+        for (app in apps + appsBeta) {
+            val url = app.telechargement ?: continue
+            // Seules les applications déjà installées sont mises à jour.
+            val installation = try {
+                packageManager.getPackageInfo(app.packageName, 0).lastUpdateTime
+            } catch (e: PackageManager.NameNotFoundException) {
+                continue
+            }
+            // Les applications n'incrémentent pas leur numéro de version : on compare la date
+            // de publication de l'APK à la date d'installation sur la tablette.
+            val publication = MiseAJour.datePublication(url)
+            candidats += Candidat(
+                app.nom, icone(app), url, "${app.packageName}.apk",
+                publication != null && publication > installation
+            )
+        }
+        return candidats
+    }
+
+    /** Fenêtre listant chaque application, avec une case à cocher pour sa mise à jour. */
+    private fun choisirMisesAJour(candidats: List<Candidat>) {
+        val marge = (24 * resources.displayMetrics.density).toInt()
+        val liste = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(marge, marge / 2, marge, 0)
+        }
+        val cases = candidats.map { candidat ->
+            val ligne = layoutInflater.inflate(R.layout.item_mise_a_jour, liste, false)
+            ligne.findViewById<ImageView>(R.id.maj_icone).setImageDrawable(candidat.icone)
+            ligne.findViewById<TextView>(R.id.maj_nom).text = candidat.nom
+            ligne.findViewById<TextView>(R.id.maj_statut).apply {
+                setText(if (candidat.disponible) R.string.maj_statut_disponible else R.string.maj_statut_a_jour)
+                setTextColor(getColor(if (candidat.disponible) R.color.beta else R.color.texte_secondaire))
+            }
+            val case = ligne.findViewById<CheckBox>(R.id.maj_case).apply {
+                isChecked = candidat.disponible
+                isEnabled = candidat.disponible
+            }
+            if (candidat.disponible) ligne.setOnClickListener { case.toggle() }
+            liste.addView(ligne)
+            candidat to case
+        }
+        AlertDialog.Builder(this)
+            .setTitle(R.string.maj_choix_titre)
+            .setView(ScrollView(this).apply { addView(liste) })
+            .setPositiveButton(R.string.maj_valider) { _, _ ->
+                fileMisesAJour.clear()
+                // ADF TAR en dernier : son installation ferme l'application.
+                fileMisesAJour.addAll(cases.filter { it.second.isChecked }.map { it.first }.sortedBy { it.estAdfTar })
+                installerSuivante()
+            }
+            .setNegativeButton(R.string.annuler, null)
+            .show()
+    }
+
+    /** Télécharge et installe la mise à jour suivante ; reprend au retour de l'installeur. */
+    private fun installerSuivante() {
+        val candidat = fileMisesAJour.removeFirstOrNull() ?: run {
+            remplirLigne(findViewById(R.id.ligne_apps), apps)
+            remplirLigne(findViewById(R.id.ligne_beta), appsBeta)
+            return
+        }
+        val dialogue = DialogueTelechargement(
+            getString(R.string.installation_titre, candidat.nom),
+            getString(R.string.installation_progression, candidat.nom, 0)
+        )
+        Thread {
+            try {
+                val apk = MiseAJour.telecharger(this, candidat.url, candidat.fichier) {
+                    dialogue.progression(getString(R.string.installation_progression, candidat.nom, it), it)
+                }
+                dialogue.installer(apk, DEMANDE_INSTALLATION)
+            } catch (e: Exception) {
+                dialogue.fermer(R.string.installation_erreur)
+                runOnUiThread { installerSuivante() }
+            }
+        }.start()
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        // Installation acceptée ou refusée : on passe à la suivante.
+        if (requestCode == DEMANDE_INSTALLATION) installerSuivante()
     }
 
     /** Tuile d'une application absente : téléchargement dans l'application puis installation. */
@@ -196,14 +312,16 @@ class MainActivity : Activity() {
             texte.text = message
         }
 
-        fun fermer(message: Int) = runOnUiThread {
+        fun fermer(message: Int? = null) = runOnUiThread {
             dialogue.dismiss()
-            Toast.makeText(this@MainActivity, message, Toast.LENGTH_LONG).show()
+            if (message != null) Toast.makeText(this@MainActivity, message, Toast.LENGTH_LONG).show()
         }
 
-        fun installer(apk: java.io.File) = runOnUiThread {
+        /** Lance l'installeur ; avec [demande], le résultat revient dans onActivityResult. */
+        fun installer(apk: java.io.File, demande: Int? = null) = runOnUiThread {
             dialogue.dismiss()
-            startActivity(MiseAJour.intentInstallation(this@MainActivity, apk))
+            val intent = MiseAJour.intentInstallation(this@MainActivity, apk)
+            if (demande != null) startActivityForResult(intent, demande) else startActivity(intent)
         }
     }
 
@@ -305,6 +423,7 @@ class MainActivity : Activity() {
         const val CLE_BETA = "beta_visible"
         const val DUREE_APPUI_BETA_MS = 5_000L
         const val CASES_PAR_LIGNE = 5
+        const val DEMANDE_INSTALLATION = 1
 
         /** Empreinte SHA-256 du mot de passe : le mot de passe lui-même n'est pas dans le code. */
         const val EMPREINTE_MOT_DE_PASSE_BETA =
