@@ -15,11 +15,10 @@ import android.text.InputType
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
-import android.widget.BaseAdapter
 import android.widget.EditText
 import android.widget.FrameLayout
-import android.widget.GridView
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
@@ -38,28 +37,17 @@ data class AppCible(
 
 class MainActivity : Activity() {
 
-    private lateinit var adapter: AppsAdapter
-    private lateinit var adapterBeta: AppsAdapter
+    private lateinit var apps: List<AppCible>
+    private lateinit var appsBeta: List<AppCible>
+    private val filtreGris = ColorMatrixColorFilter(ColorMatrix().apply { setSaturation(0f) })
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val apps = chargerApplications()
-        adapter = AppsAdapter(apps)
-        val grille = findViewById<GridView>(R.id.grille_apps)
-        grille.adapter = adapter
-        grille.emptyView = findViewById(R.id.texte_vide)
-        grille.setOnItemClickListener { _, _, position, _ ->
-            ouvrir(adapter.getItem(position))
-        }
-
-        adapterBeta = AppsAdapter(apps.mapNotNull { it.beta })
-        val grilleBeta = findViewById<GridView>(R.id.grille_beta)
-        grilleBeta.adapter = adapterBeta
-        grilleBeta.setOnItemClickListener { _, _, position, _ ->
-            ouvrir(adapterBeta.getItem(position))
-        }
+        apps = chargerApplications()
+        appsBeta = apps.mapNotNull { it.beta }
+        findViewById<View>(R.id.texte_vide).visibility = if (apps.isEmpty()) View.VISIBLE else View.GONE
         afficherBeta(prefsBeta().getBoolean(CLE_BETA, false))
 
         val version = findViewById<TextView>(R.id.texte_version)
@@ -222,8 +210,8 @@ class MainActivity : Activity() {
     override fun onResume() {
         super.onResume()
         // Rafraîchit l'état "installée / non installée" au retour dans l'application.
-        adapter.notifyDataSetChanged()
-        adapterBeta.notifyDataSetChanged()
+        remplirLigne(findViewById(R.id.ligne_apps), apps)
+        remplirLigne(findViewById(R.id.ligne_beta), appsBeta)
     }
 
     /** Lit la liste des applications depuis assets/applications.json. */
@@ -283,31 +271,40 @@ class MainActivity : Activity() {
         null
     }
 
-    private inner class AppsAdapter(private val apps: List<AppCible>) : BaseAdapter() {
-        private val filtreGris = ColorMatrixColorFilter(ColorMatrix().apply { setSaturation(0f) })
-
-        override fun getCount() = apps.size
-        override fun getItem(position: Int) = apps[position]
-        override fun getItemId(position: Int) = position.toLong()
-
-        override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
-            val vue = convertView ?: layoutInflater.inflate(R.layout.item_app, parent, false)
-            val app = apps[position]
-            val installee = estInstallee(app)
-
-            val image = vue.findViewById<ImageView>(R.id.icone_app)
-            image.setImageDrawable(icone(app) ?: getDrawable(R.drawable.ic_app_absente))
-            image.colorFilter = if (installee) null else filtreGris
-
-            vue.findViewById<TextView>(R.id.nom_app).text = app.nom
-            vue.alpha = if (installee) 1f else 0.5f
-            return vue
+    /**
+     * Remplit une ligne de tuiles. La ligne a une hauteur fixe (part de l'écran) et ne
+     * défile pas : les tuiles se partagent sa largeur, et l'icône s'adapte à la place
+     * disponible. On réserve au moins [CASES_PAR_LIGNE] cases pour que les tuiles gardent
+     * une taille raisonnable quand il y a peu d'applications.
+     */
+    private fun remplirLigne(ligne: LinearLayout, liste: List<AppCible>) {
+        ligne.removeAllViews()
+        val marge = (8 * resources.displayMetrics.density).toInt()
+        for (i in 0 until maxOf(CASES_PAR_LIGNE, liste.size)) {
+            val app = liste.getOrNull(i)
+            val tuile = if (app == null) View(this) else creerTuile(ligne, app)
+            ligne.addView(tuile, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f).apply {
+                setMargins(marge, marge, marge, marge)
+            })
         }
+    }
+
+    private fun creerTuile(parent: ViewGroup, app: AppCible): View {
+        val vue = layoutInflater.inflate(R.layout.item_app, parent, false)
+        val installee = estInstallee(app)
+        val image = vue.findViewById<ImageView>(R.id.icone_app)
+        image.setImageDrawable(icone(app) ?: getDrawable(R.drawable.ic_app_absente))
+        image.colorFilter = if (installee) null else filtreGris
+        vue.findViewById<TextView>(R.id.nom_app).text = app.nom
+        vue.alpha = if (installee) 1f else 0.5f
+        vue.setOnClickListener { ouvrir(app) }
+        return vue
     }
 
     private companion object {
         const val CLE_BETA = "beta_visible"
         const val DUREE_APPUI_BETA_MS = 5_000L
+        const val CASES_PAR_LIGNE = 5
 
         /** Empreinte SHA-256 du mot de passe : le mot de passe lui-même n'est pas dans le code. */
         const val EMPREINTE_MOT_DE_PASSE_BETA =
