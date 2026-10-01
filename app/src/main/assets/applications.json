@@ -2,7 +2,11 @@
   {
     "nom": "PV Jointage",
     "package": "com.adf.pvjointage",
-    "telechargement": "https://github.com/dabom1993-pixel/PVJointage/releases/download/tablette-latest/PVJointage.apk"
+    "telechargement": "https://github.com/dabom1993-pixel/PVJointage/releases/download/tablette-latest/PVJointage.apk",
+    "beta": {
+      "package": "com.adf.pvjointage.beta",
+      "telechargement": "https://github.com/dabom1993-pixel/PVJointage/releases/download/tablette-beta/PVJointage-BETA.apk"
+    }
   },
   {
     "nom": "PI Robinetterie",
