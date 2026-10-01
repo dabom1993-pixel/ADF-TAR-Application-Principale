@@ -61,8 +61,10 @@ https://github.com/dabom1993-pixel/ADF-TAR-Application-Principale/releases/downl
 
 Toucher le **logo Groupe ADF** en haut à gauche : ADF TAR vérifie sa propre version
 (affichée en haut à droite) et chaque application installée de la liste, finales et
-bêtas. Pour ces applications, la date de l'APK publié (en-tête `Last-Modified`) est
-comparée à leur date d'installation sur la tablette. Une fenêtre liste ensuite chaque
+bêtas. Pour ces applications, le numéro de version installé est comparé au
+`version.txt` publié à côté de leur APK (même référence que celle utilisée par
+l'application elle-même) ; à défaut de `version.txt`, la date de l'APK publié
+(en-tête `Last-Modified`) est comparée à la date d'installation. Une fenêtre liste ensuite chaque
 application avec une case à cocher ; « Mettre à jour » installe les mises à jour
 cochées l'une après l'autre (ADF TAR en dernier). Android demande une confirmation (et, la première fois,
 d'autoriser l'installation d'applications depuis ADF TAR).

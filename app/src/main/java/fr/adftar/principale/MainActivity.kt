@@ -24,6 +24,7 @@ import android.widget.ProgressBar
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.content.pm.PackageInfoCompat
 import org.json.JSONArray
 import java.security.MessageDigest
 
@@ -190,18 +191,22 @@ class MainActivity : Activity() {
         for (app in apps + appsBeta) {
             val url = app.telechargement ?: continue
             // Seules les applications déjà installées sont mises à jour.
-            val installation = try {
-                packageManager.getPackageInfo(app.packageName, 0).lastUpdateTime
+            val paquet = try {
+                packageManager.getPackageInfo(app.packageName, 0)
             } catch (e: PackageManager.NameNotFoundException) {
                 continue
             }
-            // Les applications n'incrémentent pas leur numéro de version : on compare la date
-            // de publication de l'APK à la date d'installation sur la tablette.
-            val publication = MiseAJour.datePublication(url)
-            candidats += Candidat(
-                app.nom, icone(app), url, "${app.packageName}.apk",
-                publication != null && publication > installation
-            )
+            // Même référence que l'application elle-même : le numéro de version de l'APK
+            // installé, comparé au version.txt publié à côté de l'APK.
+            val publiee = MiseAJour.versionPublieeApk(url)
+            val disponible = if (publiee != null) {
+                publiee > PackageInfoCompat.getLongVersionCode(paquet)
+            } else {
+                // Ancienne release sans version.txt : date de l'APK contre date d'installation.
+                val publication = MiseAJour.datePublication(url)
+                publication != null && publication > paquet.lastUpdateTime
+            }
+            candidats += Candidat(app.nom, icone(app), url, "${app.packageName}.apk", disponible)
         }
         return candidats
     }

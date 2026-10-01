@@ -21,9 +21,17 @@ object MiseAJour {
     private const val URL_VERSION = "$BASE/version.txt"
     const val URL_APK = "$BASE/ADF-TAR.apk"
 
-    /** Numéro de la dernière version publiée, ou null si la release est introuvable. */
-    fun versionPubliee(): Int? {
-        val conn = ouvrir(URL_VERSION)
+    /** Numéro de la dernière version d'ADF TAR publiée, ou null si la release est introuvable. */
+    fun versionPubliee(): Int? = lireVersion(URL_VERSION)
+
+    /**
+     * Numéro publié dans le version.txt placé à côté d'un APK de release
+     * (…/releases/download/<tag>/version.txt), ou null s'il n'existe pas.
+     */
+    fun versionPublieeApk(urlApk: String): Int? = lireVersion(urlApk.substringBeforeLast('/') + "/version.txt")
+
+    private fun lireVersion(url: String): Int? {
+        val conn = ouvrir(url)
         try {
             if (conn.responseCode != HttpURLConnection.HTTP_OK) return null
             return conn.inputStream.bufferedReader().use { it.readText() }.trim().toIntOrNull()
