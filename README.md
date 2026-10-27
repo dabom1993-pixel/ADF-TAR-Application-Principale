@@ -77,6 +77,10 @@ d'autoriser l'installation d'applications depuis ADF TAR).
 
 ## Installer sur la tablette
 
+Scanner ce QR code avec la tablette : il télécharge directement la dernière version.
+
+![QR code d'installation d'ADF TAR](docs/qr-tablette.png)
+
 1. Sur la tablette, ouvrir le lien de téléchargement ci-dessus dans le navigateur.
 2. Ouvrir le fichier téléchargé et autoriser l'installation d'applications
    de sources inconnues si Android le demande.
